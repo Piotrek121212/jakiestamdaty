@@ -1,0 +1,292 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #1e1e1e;
+    background-image: url('background_bg.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-blend-mode: overlay; /* Przyciemnienie tła */
+    color: #f0f0f0; /* Jasny tekst */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+h1 {
+    color: #00d2ff; /* Wyrazisty cyjan */
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    text-align: center;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+}
+
+/* Kontener jednej aktywnej fiszki */
+#single-card-container {
+    width: 100%;
+    max-width: 500px;
+    height: 400px; /* Nieco niższe niż z obrazkami */
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.card {
+    background-color: transparent;
+    width: 100%;
+    height: 100%;
+    perspective: 1000px;
+    cursor: pointer;
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+    border-radius: 15px;
+}
+
+.card.is-flipped .card-inner {
+    transform: rotateY(180deg);
+}
+
+.card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    border-radius: 15px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #444;
+}
+
+/* Dostosowanie przodu (Rok zamiast obrazka) */
+.card-front {
+    background-color: #2b2b2b;
+    color: #00d2ff;
+    flex-direction: column;
+}
+
+.year-display {
+    font-size: 5rem;
+    font-weight: bold;
+}
+
+/* Tył (Wydarzenie) */
+.card-back {
+    background-color: #00d2ff;
+    color: #121212;
+    transform: rotateY(180deg);
+    flex-direction: column;
+    padding: 30px;
+    box-sizing: border-box;
+}
+
+.card-back h2 {
+    margin-top: 0;
+    font-size: 1.8rem;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.card-back p {
+    margin: 8px 0;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+/* Sterowanie */
+.controls {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 20px;
+    width: 100%;
+    max-width: 600px;
+}
+
+button {
+    background-color: #333;
+    color: white;
+    border: 2px solid #00d2ff;
+    padding: 12px 25px;
+    border-radius: 30px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: bold;
+    text-transform: uppercase;
+    min-width: 120px;
+}
+
+button:hover {
+    background-color: #00d2ff;
+    color: #121212;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 210, 255, 0.3);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+button.active-mode {
+    background-color: #00d2ff;
+    color: #121212;
+    box-shadow: 0 0 15px #00d2ff;
+}
+
+.counter {
+    color: #888;
+    margin-top: 10px;
+    font-size: 0.9rem;
+}
+
+.hint {
+    margin-bottom: 15px;
+    color: #ccc;
+    font-size: 1rem;
+    text-shadow: 1px 1px 2px black;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    #single-card-container {
+        height: 350px;
+    }
+    
+    .controls {
+        gap: 10px;
+    }
+
+    button {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+        min-width: auto;
+        flex: 1;
+    }
+}
+
+/* Nawigacja trybów */
+.nav-mode-switch {
+    margin: 10px 0 20px 0;
+    text-decoration: none;
+    color: #121212;
+    background-color: #00d2ff;
+    padding: 10px 25px;
+    border-radius: 25px;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: inline-block;
+}
+
+.nav-mode-switch:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 210, 255, 0.4);
+}
+
+/* Wrapper na przyciski na karcie */
+.card-buttons {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px; 
+    z-index: 10;
+}
+
+/* Wspólny styl przycisków akcji */
+.action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 2.2rem;
+    transition: transform 0.2s, color 0.2s;
+    line-height: 1;
+    padding: 0;
+    text-shadow: 0 0 5px rgba(0,0,0,0.5);
+    min-width: auto;
+    width: auto;
+}
+
+.action-btn:hover {
+    transform: scale(1.2);
+    background: none;
+    box-shadow: none;
+}
+
+/* Diabełek */
+.devil-btn {
+    color: rgba(255, 255, 255, 0.4);
+}
+.card-back .devil-btn {
+    color: rgba(0, 0, 0, 0.2);
+}
+.devil-btn.is-active, 
+.card-front .devil-btn.is-active, 
+.card-back .devil-btn.is-active {
+    color: #ff0000 !important;
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.6);
+}
+
+/* Ptaszek (Umiem) */
+.check-btn {
+    color: rgba(255, 255, 255, 0.4);
+}
+.card-back .check-btn {
+    color: rgba(0, 0, 0, 0.2);
+}
+.check-btn.is-active,
+.card-front .check-btn.is-active,
+.card-back .check-btn.is-active {
+    color: #00ff00 !important;
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.6);
+}
+
+/* Przycisk filtra trudnych w controls */
+#fav-filter-btn.active-mode {
+    background: #dc143c;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(220, 20, 60, 0.5);
+    border-color: #ff0000;
+}
+
+/* Przycisk filtra znanych w controls */
+#known-filter-btn.active-mode {
+    background: #28a745;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(40, 167, 69, 0.5);
+    border-color: #28a745;
+}
+
+/* Ulepszone sterowanie - rozdzielenie na dwie linie */
+.secondary-controls {
+    margin-top: 10px !important;
+    gap: 10px;
+}
+
+.secondary-controls button {
+    padding: 8px 15px;
+    font-size: 0.85rem;
+    min-width: unset;
+    border-color: #555;
+}

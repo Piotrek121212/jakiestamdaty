@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wydarzenia Historyczne</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <h1>Ważne Daty Historyczne 🏰</h1>
+
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px;">
+        <a href="program_nauka.html" class="nav-mode-switch" style="text-decoration: none; color: #121212; background-color: #00d2ff; padding: 10px 25px; border-radius: 25px; font-weight: bold; text-transform: uppercase;">Przejdź do Trybu Nauki 🎓</a>
+        <a href="quiz.html" class="nav-mode-switch" style="text-decoration: none; background-color: #ff0055; color: #fff; padding: 10px 25px; border-radius: 25px; font-weight: bold; text-transform: uppercase;">Sprawdź się w Quizie 🎲</a>
+    </div>
+    
+    <!-- Filtracja -->
+    <div class="filter-container">
+        <input type="text" id="search-input" placeholder="Szukaj (Rok lub Wydarzenie)...">
+        <select id="view-mode-select">
+            <option value="date-front">Widok: Data ➡️ Wydarzenie</option>
+            <option value="event-front">Widok: Wydarzenie ➡️ Data</option>
+        </select>
+    </div>
+    
+    <div class="gallery" id="fiszki-container">
+    </div>
+
+    <script src="data.js"></script>
+    <script>
+        const container = document.getElementById('fiszki-container');
+        const searchInput = document.getElementById('search-input');
+        const viewModeSelect = document.getElementById('view-mode-select');
+
+        function renderGallery(data) {
+            container.innerHTML = '';
+            const isEventFront = viewModeSelect.value === 'event-front';
+
+            if (data.length === 0) {
+                container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; font-size: 1.5rem; color: #888;">Nic nie znaleziono 🕵️‍♂️</div>';
+                return;
+            }
+
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card';
+
+                const inner = document.createElement('div');
+                inner.className = 'card-inner';
+
+                // PRZÓD KARTY
+                const front = document.createElement('div');
+                front.className = 'card-front';
+                
+                if (!isEventFront) {
+                    // DATA NA PRZODZIE
+                    front.innerHTML = `
+                        <div class="year-display">${item.date}</div>
+                        <div style="font-size: 0.9rem; color: #888; margin-top: 10px;">(kliknij aby zobaczyć)</div>
+                    `;
+                } else {
+                    // WYDARZENIE NA PRZODZIE
+                    front.innerHTML = `
+                        <div style="font-size: 1.5rem; font-weight: bold; padding: 0 10px;">${item.event}</div>
+                        <div style="font-size: 0.9rem; color: #888; margin-top: 10px;">(kliknij aby zobaczyć)</div>
+                    `;
+                }
+
+                // TYŁ KARTY
+                const back = document.createElement('div');
+                back.className = 'card-back';
+                
+                if (!isEventFront) {
+                    // WYDARZENIE Z TYŁU
+                    back.innerHTML = `
+                        <h2>${item.event}</h2>
+                        <div>
+                            <span style="font-size: 0.9rem; text-transform: uppercase; opacity: 0.7;">Rok:</span>
+                            <strong>${item.date}</strong>
+                        </div>
+                    `;
+                } else {
+                    // DATA Z TYŁU
+                     back.innerHTML = `
+                        <h2 style="font-size: 3rem; margin-bottom: 5PX;">${item.date}</h2>
+                        <div>
+                            <span style="font-size: 0.9rem; text-transform: uppercase; opacity: 0.7;">Wydarzenie:</span>
+                            <p>${item.event}</p>
+                        </div>
+                    `;
+                }
+
+                inner.appendChild(front);
+                inner.appendChild(back);
+                card.appendChild(inner);
+                container.appendChild(card);
+
+                // Obracanie
+                card.addEventListener('click', function() {
+                    this.classList.toggle('is-flipped');
+                });
+            });
+        }
+
+        function filterGallery() {
+            const searchTerm = searchInput.value.toLowerCase();
+
+            const filteredData = eventData.filter(item => {
+                return item.event.toLowerCase().includes(searchTerm) || 
+                       item.date.includes(searchTerm);
+            });
+
+            renderGallery(filteredData);
+        }
+
+        searchInput.addEventListener('input', filterGallery);
+        viewModeSelect.addEventListener('change', () => renderGallery(eventData.filter(item => {
+             const searchTerm = searchInput.value.toLowerCase();
+             return item.event.toLowerCase().includes(searchTerm) || item.date.includes(searchTerm);
+        })));
+
+        // Start
+        renderGallery(eventData);
+    </script>
+</body>
+</html>

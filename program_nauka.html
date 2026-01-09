@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historia - Tryb Nauki</title>
+    <link rel="stylesheet" href="style_learning.css">
+</head>
+<body>
+
+    <h1>Tryb Nauki - Daty 📅</h1>
+    <div class="hint">Kliknij kartę by obrócić • Użyj przycisków do nawigacji</div>
+
+    <a href="index.html" class="nav-mode-switch">Widok Galerii (Wszystkie) 📜</a>
+    
+    <div id="single-card-container">
+        <!-- Tu JavaScript wstawi aktywną kartę -->
+    </div>
+
+    <div class="counter" id="counter-display">1 / ?</div>
+
+    <div class="controls secondary-controls" style="align-items: center; justify-content: center;">
+         <select id="mode-select" style="padding: 10px; border-radius: 25px; background: #333; color: white; border: 2px solid #00d2ff; outline: none; text-align: center; cursor: pointer; font-weight: bold; margin: 5px;">
+            <option value="date-front">Tryb: Data ➡️ Wydarzenie</option>
+            <option value="event-front">Tryb: Wydarzenie ➡️ Data</option>
+         </select>
+         <button id="random-btn">Losowe: OFF</button>
+         <button id="fav-filter-btn">😈 Trudne</button>
+         <button id="known-filter-btn" class="active-mode">✅ Ukryj znane: ON</button>
+    </div>
+
+    <div class="controls primary-controls">
+        <button id="prev-btn">Poprzednia</button>
+        <button id="next-btn">Następna</button>
+    </div>
+
+    <script src="data.js"></script>
+    <script>
+        // BAZA DANYCH
+        const originalEventData = eventData; // from data.js
+
+        // Zmienne stanu
+        let currentData = [...originalEventData]; // Kopia do pracy
+        let currentIndex = 0;
+        let isRandomMode = false;
+        let isFavFilterMode = false;
+        let isKnownFilterMode = true; // Domyślnie ukrywamy to co umiemy
+
+        // Ładujemy trudne i znane karty z localStorage - identyfikatorem jest event
+        let difficult = JSON.parse(localStorage.getItem('historiaTrudne')) || [];
+        let known = JSON.parse(localStorage.getItem('historiaZnane')) || [];
+
+        // Elementy DOM
+        const cardContainer = document.getElementById('single-card-container');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const randomBtn = document.getElementById('random-btn');
+        const favFilterBtn = document.getElementById('fav-filter-btn');
+        const knownFilterBtn = document.getElementById('known-filter-btn');
+        const counterDisplay = document.getElementById('counter-display');
+        const modeSelect = document.getElementById('mode-select');
+
+        // Funkcje
+        function renderCard(index) {
+            if (currentData.length === 0) {
+                 if(isKnownFilterMode && known.length > 0) {
+                    cardContainer.innerHTML = '<div style="color:white; text-align:center; padding-top: 100px;">Brawo! Wszystko umiesz! 🎉<br>Możesz odkryć znane karty przyciskiem na dole.</div>';
+                 } else {
+                    cardContainer.innerHTML = '<div style="color:white; text-align:center; padding-top: 100px;">Brak kart do wyświetlenia. <br>Oznacz najpierw coś diabełkiem! 😈</div>';
+                 }
+                 counterDisplay.innerText = "0 / 0";
+                 prevBtn.disabled = true;
+                 nextBtn.disabled = true;
+                 return;
+            }
+
+            const item = currentData[index];
+            const isDifficult = difficult.includes(item.event);
+            const isKnown = known.includes(item.event);
+            const isEventFront = modeSelect.value === 'event-front';
+
+            let frontContent, backContent;
+
+            if (!isEventFront) {
+                // DATA NA PRZODZIE (DOMYŚLNIE)
+                frontContent = `
+                    <div class="year-display">${item.date}</div>
+                    <div style="font-size: 0.8rem; color: #888; margin-top: 15px;">Kliknij żeby zobaczyć co to</div>
+                `;
+                backContent = `
+                    <h2>${item.event}</h2>
+                    <div>
+                        <span class="label">ROK:</span>
+                        <p style="font-size: 1.5rem; color: #fff;">${item.date}</p>
+                    </div>
+                `;
+            } else {
+                // WYDARZENIE NA PRZODZIE
+                frontContent = `
+                    <div style="font-size: 1.6rem; font-weight: bold; padding: 0 15px;">${item.event}</div>
+                    <div style="font-size: 0.8rem; color: #888; margin-top: 15px;">Kliknij żeby zobaczyć datę</div>
+                `;
+                backContent = `
+                    <h2 style="font-size: 3rem; margin-bottom: 5px;">${item.date}</h2>
+                     <div>
+                        <span class="label">WYDARZENIE:</span>
+                        <p style="font-size: 1.2rem; margin-top: 5px;">${item.event}</p>
+                    </div>
+                `;
+            }
+
+            const cardHTML = `
+                <div class="card" onclick="this.classList.toggle('is-flipped')">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <div class="card-buttons">
+                                <button class="action-btn devil-btn ${isDifficult ? 'is-active' : ''}" 
+                                        onclick="event.stopPropagation(); toggleDifficult('${item.event.replace(/'/g, "\\'")}')"
+                                        title="${isDifficult ? 'Usuń z trudnych' : 'Dodaj do trudnych'}">
+                                    😈
+                                </button>
+                                <button class="action-btn check-btn ${isKnown ? 'is-active' : ''}" 
+                                        onclick="event.stopPropagation(); toggleKnown('${item.event.replace(/'/g, "\\'")}')"
+                                        title="${isKnown ? 'Oznacz jako nieumiane' : 'Oznacz jako umiane'}">
+                                    ✅
+                                </button>
+                            </div>
+                            ${frontContent}
+                        </div>
+                        <div class="card-back">
+                            <div class="card-buttons">
+                                <button class="action-btn devil-btn ${isDifficult ? 'is-active' : ''}" 
+                                        onclick="event.stopPropagation(); toggleDifficult('${item.event.replace(/'/g, "\\'")}')">
+                                    😈
+                                </button>
+                                <button class="action-btn check-btn ${isKnown ? 'is-active' : ''}" 
+                                        onclick="event.stopPropagation(); toggleKnown('${item.event.replace(/'/g, "\\'")}')">
+                                    ✅
+                                </button>
+                            </div>
+                            ${backContent}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            cardContainer.style.opacity = '0';
+            setTimeout(() => {
+                cardContainer.innerHTML = cardHTML;
+                cardContainer.style.opacity = '1';
+                updateCounter();
+            }, 100);
+            cardContainer.style.transition = 'opacity 0.1s ease';
+        }
+
+        function toggleDifficult(eventText) {
+            if (difficult.includes(eventText)) {
+                difficult = difficult.filter(t => t !== eventText);
+            } else {
+                difficult.push(eventText);
+            }
+            localStorage.setItem('historiaTrudne', JSON.stringify(difficult));
+            
+            if (isFavFilterMode) {
+                applyFilters();
+            } else {
+                renderCard(currentIndex);
+            }
+        }
+
+        function toggleKnown(eventText) {
+            if (known.includes(eventText)) {
+                known = known.filter(t => t !== eventText);
+            } else {
+                known.push(eventText);
+            }
+            localStorage.setItem('historiaZnane', JSON.stringify(known));
+
+            // Jeśli ukrywamy znane, to ta karta powinna zniknąć
+            if (isKnownFilterMode) {
+                applyFilters();
+            } else {
+                renderCard(currentIndex);
+            }
+        }
+
+        function updateCounter() {
+            if (currentData.length === 0) return;
+            counterDisplay.innerText = `${currentIndex + 1} / ${currentData.length}`;
+            
+            prevBtn.disabled = (!isRandomMode && currentIndex === 0); 
+            prevBtn.style.opacity = prevBtn.disabled ? '0.5' : '1';
+            
+            nextBtn.disabled = (!isRandomMode && currentIndex === currentData.length - 1);
+            nextBtn.style.opacity = nextBtn.disabled ? '0.5' : '1';
+        }
+
+        function nextCard() {
+            if (currentIndex < currentData.length - 1) {
+                currentIndex++;
+                renderCard(currentIndex);
+            } else if (isRandomMode && currentData.length > 0) {
+                 reshuffle();
+            }
+        }
+
+        function prevCard() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderCard(currentIndex);
+            }
+        }
+
+        function toggleRandomMode() {
+            isRandomMode = !isRandomMode;
+            if (isRandomMode) {
+                randomBtn.innerText = "Losowe: ON";
+                randomBtn.classList.add('active-mode');
+            } else {
+                randomBtn.innerText = "Losowe: OFF";
+                randomBtn.classList.remove('active-mode');
+            }
+            applyFilters();
+        }
+
+        function toggleFavFilter() {
+            isFavFilterMode = !isFavFilterMode;
+            if (isFavFilterMode) {
+                favFilterBtn.classList.add('active-mode');
+                favFilterBtn.innerText = "😈 Trudne: ON";
+            } else {
+                favFilterBtn.classList.remove('active-mode');
+                favFilterBtn.innerText = "😈 Trudne";
+            }
+            applyFilters();
+        }
+
+        function toggleKnownFilter() {
+            isKnownFilterMode = !isKnownFilterMode;
+            if (isKnownFilterMode) {
+                knownFilterBtn.classList.add('active-mode');
+                knownFilterBtn.innerText = "✅ Ukryj znane: ON";
+            } else {
+                knownFilterBtn.classList.remove('active-mode');
+                knownFilterBtn.innerText = "✅ Ukryj znane: OFF";
+            }
+            applyFilters();
+        }
+
+        function applyFilters() {
+            // 1. Zaczynamy od bazy
+            let newData = [...originalEventData];
+
+            // 2. Filtrujemy trudne (jeśli włączone)
+            if (isFavFilterMode) {
+                newData = newData.filter(item => difficult.includes(item.event));
+            }
+
+            // 3. Filtrujemy znane (jeśli włączone)
+            if (isKnownFilterMode) {
+                newData = newData.filter(item => !known.includes(item.event));
+            }
+
+            // 4. Obsługa losowości
+            if (isRandomMode) {
+                newData = shuffleArray(newData);
+            }
+
+            currentData = newData;
+            currentIndex = 0;
+            renderCard(currentIndex);
+        }
+
+        function reshuffle() {
+            currentData = shuffleArray(currentData);
+            currentIndex = 0;
+            renderCard(currentIndex);
+        }
+
+        function shuffleArray(array) {
+            let arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+        modeSelect.addEventListener('change', () => renderCard(currentIndex));
+            return arr;
+        }
+
+        // Event Listeners - Klawiatura
+        document.addEventListener('keydown', (e) => {
+            if (currentData.length === 0) return;
+            // Lewo / Prawo - zmiana karty
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                if(!isRandomMode && currentIndex === currentData.length - 1) return; 
+                nextCard();
+            } else if (e.key === 'ArrowLeft') {
+                prevCard();
+            }
+            // Góra / Dół - obrót karty
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                const card = document.querySelector('.card');
+                if(card) card.classList.toggle('is-flipped');
+            }
+        });
+
+        // Event Listeners - Przyciski
+        nextBtn.addEventListener('click', nextCard);
+        prevBtn.addEventListener('click', prevCard);
+        randomBtn.addEventListener('click', toggleRandomMode);
+        favFilterBtn.addEventListener('click', toggleFavFilter);
+        knownFilterBtn.addEventListener('click', toggleKnownFilter);
+
+        // Start
+        applyFilters();
+
+    </script>
+</body>
+</html>
